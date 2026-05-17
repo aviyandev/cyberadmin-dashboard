@@ -1,0 +1,30 @@
+{
+    "name": "cyberadmin/dashboard",
+    "description": "A cyberpunk-themed Laravel admin dashboard package with Livewire 4",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "CyberAdmin Team"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.0",
+        "livewire/livewire": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "CyberAdmin\\Dashboard\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "CyberAdmin\\Dashboard\\CyberAdminServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
