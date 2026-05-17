@@ -20,23 +20,52 @@ class InstallCyberAdmin extends Command
 
         try {
             $this->steps = [];
-
-            $this->step('Check if Livewire is installed', function () {
+            
+            $this->step('Check and install dependencies (Livewire, Fortify)', function () {
                 if (!class_exists('Livewire\Livewire')) {
                     $this->info('Livewire not found. Installing Livewire 4...');
                     $this->runShellCommand('composer require livewire/livewire:^4.0');
-                    return true;
+                } else {
+                    $this->info('Livewire is already installed.');
                 }
-                $this->info('Livewire is already installed.');
-                return false;
+                
+                if (!class_exists('Laravel\Fortify\FortifyServiceProvider')) {
+                    $this->info('Fortify not found. Installing Laravel Fortify...');
+                    $this->runShellCommand('composer require laravel/fortify');
+                } else {
+                    $this->info('Fortify is already installed.');
+                }
+                
+                return true;
             });
 
-            $this->step('Publish configuration', function () {
+            $this->step('Publish Fortify configuration', function () {
+                if (!File::exists(config_path('fortify.php'))) {
+                    $this->copyStubFile('config/fortify.php', config_path('fortify.php'));
+                }
+                return true;
+            });
+
+            $this->step('Publish authentication views', function () {
+                $authViewPath = resource_path('views/auth');
+                if (!File::isDirectory($authViewPath)) {
+                    File::makeDirectory($authViewPath, 0755, true);
+                }
+                
+                $stubs = ['login.blade.php', 'register.blade.php', 'forgot-password.blade.php', 'reset-password.blade.php'];
+                foreach ($stubs as $stub) {
+                    $this->copyStubFile("views/auth/{$stub}", "{$authViewPath}/{$stub}");
+                }
+                
+                return true;
+            });
+
+            $this->step('Publish CyberAdmin configuration', function () {
                 Artisan::call('cyberadmin:publish-config', [], $this->getOutput());
                 return true;
             });
 
-            $this->step('Publish assets', function () {
+            $this->step('Publish CyberAdmin assets', function () {
                 Artisan::call('cyberadmin:publish-assets', [], $this->getOutput());
                 return true;
             });
@@ -48,23 +77,19 @@ class InstallCyberAdmin extends Command
                 return true;
             });
 
-            $this->step('Run database migrations (if available)', function () {
-                $migrationPath = __DIR__ . '/../../Database/Migrations';
-                if (File::isDirectory($migrationPath) && count(File::files($migrationPath)) > 0) {
-                    Artisan::call('migrate', [], $this->getOutput());
-                }
+            $this->step('Run database migrations', function () {
+                $this->info('Running Laravel migrations...');
+                Artisan::call('migrate', [], $this->getOutput());
                 return true;
             });
 
             $this->newLine();
-            $this->info('┌─────────────────────────────────────────────────────────────┐');
-            $this->info('│  ✅  CyberAdmin Dashboard installed successfully!           │');
-            $this->info('└─────────────────────────────────────────────────────────────┘');
+            $this->info('┌─────────────────────────────────────────────────────────────────────┐');
+            $this->info('│  ✅  CyberAdmin Dashboard installed successfully!                     │');
+            $this->info('└─────────────────────────────────────────────────────────────────────┘');
             $this->newLine();
-            $this->info('Next steps:');
-            $this->line('  • Make sure you have a user authentication system set up');
-            $this->line('  • Visit /cyberadmin to access the dashboard');
-            $this->line('  • Use php artisan cyberadmin:publish-config to customize settings');
+            $this->info('Your dashboard is ready!');
+            $this->info('Start your server and visit /cyberadmin');
             $this->newLine();
 
             return 0;
@@ -73,6 +98,15 @@ class InstallCyberAdmin extends Command
             $this->error('Error: ' . $e->getMessage());
             $this->rollback();
             return 1;
+        }
+    }
+
+    protected function copyStubFile($stubPath, $destPath)
+    {
+        $source = __DIR__ . '/../../Stubs/' . $stubPath;
+        if (File::exists($source)) {
+            File::copy($source, $destPath);
+            $this->info("  Copied: {$destPath}");
         }
     }
 
