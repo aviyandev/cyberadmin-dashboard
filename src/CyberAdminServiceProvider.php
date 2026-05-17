@@ -23,11 +23,52 @@ class CyberAdminServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/Routes/web.php');
         $this->loadTranslationsFrom(__DIR__ . '/Lang', 'tactical');
 
+        $this->registerDefaultRateLimiters();
         $this->registerFortifyViews();
         $this->registerLivewireComponents();
         $this->registerPublishing();
         $this->registerMiddleware();
         $this->registerCommands();
+    }
+
+    protected function registerDefaultRateLimiters()
+    {
+        try {
+            if (class_exists(\Illuminate\Support\Facades\RateLimiter::class)) {
+                $rateLimiter = app(\Illuminate\Cache\RateLimiter::class);
+
+                if (!method_exists($rateLimiter, 'for') || !$rateLimiter->limiter('login')) {
+                    \Illuminate\Support\Facades\RateLimiter::for('login', function (\Illuminate\Http\Request $request) {
+                        return \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->email . $request->ip());
+                    });
+                }
+
+                if (!method_exists($rateLimiter, 'for') || !$rateLimiter->limiter('two-factor')) {
+                    \Illuminate\Support\Facades\RateLimiter::for('two-factor', function (\Illuminate\Http\Request $request) {
+                        return \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->session()->get('login.id'));
+                    });
+                }
+
+                if (!method_exists($rateLimiter, 'for') || !$rateLimiter->limiter('registration')) {
+                    \Illuminate\Support\Facades\RateLimiter::for('registration', function (\Illuminate\Http\Request $request) {
+                        return \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->ip());
+                    });
+                }
+
+                if (!method_exists($rateLimiter, 'for') || !$rateLimiter->limiter('reset-password')) {
+                    \Illuminate\Support\Facades\RateLimiter::for('reset-password', function (\Illuminate\Http\Request $request) {
+                        return \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->ip());
+                    });
+                }
+
+                if (!method_exists($rateLimiter, 'for') || !$rateLimiter->limiter('confirm-password')) {
+                    \Illuminate\Support\Facades\RateLimiter::for('confirm-password', function (\Illuminate\Http\Request $request) {
+                        return \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->ip());
+                    });
+                }
+            }
+        } catch (\Exception $e) {
+        }
     }
 
     protected function registerFortifyViews()
