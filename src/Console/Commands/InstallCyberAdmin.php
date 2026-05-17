@@ -23,8 +23,8 @@ class InstallCyberAdmin extends Command
             
             $this->step('Check and install dependencies (Livewire, Fortify)', function () {
                 if (!class_exists('Livewire\Livewire')) {
-                    $this->info('Livewire not found. Installing Livewire 4...');
-                    $this->runShellCommand('composer require livewire/livewire:^4.0');
+                    $this->info('Livewire not found. Installing Livewire...');
+                    $this->runShellCommand('composer require livewire/livewire');
                 } else {
                     $this->info('Livewire is already installed.');
                 }
@@ -39,14 +39,22 @@ class InstallCyberAdmin extends Command
                 return true;
             });
 
-            $this->step('Publish Fortify configuration', function () {
-                if (!File::exists(config_path('fortify.php'))) {
-                    $this->copyStubFile('config/fortify.php', config_path('fortify.php'));
+            $this->step('Run Fortify installer', function () {
+                if (!File::exists(app_path('Providers/FortifyServiceProvider.php'))) {
+                    $this->info('Running Fortify installation...');
+                    Artisan::call('fortify:install', [], $this->getOutput());
+                } else {
+                    $this->info('Fortify is already installed.');
                 }
                 return true;
             });
 
-            $this->step('Publish authentication views', function () {
+            $this->step('Overwrite Fortify config with cyberpunk theme settings', function () {
+                $this->copyStubFile('config/fortify.php', config_path('fortify.php'));
+                return true;
+            });
+
+            $this->step('Publish cyberpunk authentication views', function () {
                 $authViewPath = resource_path('views/auth');
                 if (!File::isDirectory($authViewPath)) {
                     File::makeDirectory($authViewPath, 0755, true);
