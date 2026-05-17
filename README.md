@@ -10,23 +10,12 @@ composer create-project laravel/laravel my-project
 cd my-project
 ```
 
-### 2. Add the package to your composer.json
-Add this to your `composer.json` repositories section:
-```json
-"repositories": [
-    {
-        "type": "path",
-        "url": "../cyberadmin-dashboard-package"
-    }
-]
-```
-
-### 3. Require the package
+### 2. Require the package
 ```bash
 composer require cyberadmin/dashboard
 ```
 
-### 4. Run the installation command
+### 3. Run the installation command
 ```bash
 php artisan cyberadmin:install
 ```
