@@ -14,6 +14,8 @@ class CyberAdminServiceProvider extends ServiceProvider
             __DIR__ . '/Config/cyberadmin.php',
             'cyberadmin'
         );
+
+        $this->app->bind(\Laravel\Fortify\Contracts\CreatesNewUsers::class, \CyberAdmin\Dashboard\Actions\Fortify\CreateNewUser::class);
     }
 
     public function boot()
